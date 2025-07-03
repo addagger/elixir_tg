@@ -1,5 +1,6 @@
 
 
+
 # Elixir Tg (Telegram Bot API adapter)
 
 Lightweight:
@@ -23,6 +24,13 @@ end
 Сonfigure Telegram Bot token (config/config.exs):
 ```elixir
 config :elixir_tg, Tg.ExampleBot, token: "9848322304:BBFlkeo4Testrt42lVTYe65RfL8W15SpJkw"
+```
+Start `Tg.ExampleBot`:
+
+```elixir
+children = [Tg.ExampleBot]
+opts = [strategy: :one_for_one]
+Supervisor.start_link(children, opts)
 ```
 Try in console:
 ```
