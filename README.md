@@ -31,7 +31,7 @@ Try in console:
 ```
 iex(1)> Tg.ExampleBot.get("getMe")
 ```
-```json
+```
 {:ok,
  %{
    "can_connect_to_business" => false,
@@ -39,10 +39,10 @@ iex(1)> Tg.ExampleBot.get("getMe")
    "can_read_all_group_messages" => false,
    "first_name" => "lsbprodlog",
    "has_main_web_app" => false,
-   "id" => 30304945858,
+   "id" => 30385855858,
    "is_bot" => true,
    "supports_inline_queries" => false,
-   "username" => "lsbprodlog_bot"
+   "username" => "mybotbotbot"
  }}
 ```
 Then try something to message the bot...
