@@ -58,8 +58,8 @@ defmodule Tg.Session do
   @impl true
   def handle_cast({:handle_update, update}, %State{} = state) do
     try do
-     state.bot_module.handle_update(update, state.bot_state)
-     |> handle_callback_result(state)
+      state.bot_module.handle_update(update, state.bot_state)
+      |> handle_callback_result(state)
     rescue
       error ->
         stacktrace = Exception.format(:error, error, __STACKTRACE__)
