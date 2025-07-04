@@ -1,6 +1,7 @@
 
 
 
+
 # Elixir Tg (Telegram Bot API adapter)
 
 Lightweight:
@@ -145,13 +146,13 @@ iex(1)> MyBot.Router.webhook_path
 "/tg/PFUm5RFERxrdMFtTfTTvtl9qDrI"
 ```
 Keep in mind that endpoint is used just by your local Bandit instance.
-In my case the real world-looking web interface managed by Nginx, thus it is reasonable for me to configure Nginx to `proxy_pass` WebHook request to a local machine. And I couldn't think of anything better than to use almost the same path in the Nginx interface: `/telegram/PFUm5RFERxrdMFtTfTTvtl9qDrI` to accept WebHook request.
+In my case the real world-looking web interface managed by Nginx, thus it is reasonable for me to configure Nginx to `proxy_pass` WebHook request to a local machine. And I couldn't think of anything better than to use almost the same path in the Nginx interface: `/nginx/tg/PFUm5RFERxrdMFtTfTTvtl9qDrI` to accept WebHook request.
 
 2. Next, let's tell Telegram API about URL (or direct IP) for WebHook requests we've just chosen. In my case I use direct IP address instead of domain name:
 ```elixir
 iex(1)> MyBot.Poller.stop
 :ok
-iex(1)> MyBot.post("setWebhook", %{ip_address: "X.X.X.X", url: "https://X.X.X.X/telegram/PFUm5RFERxrdMFtTfTTvtl9qDrI", certificate: {:file, "/path/to/cert.pem"}})
+iex(1)> MyBot.post("setWebhook", %{ip_address: "X.X.X.X", url: "https://X.X.X.X/nginx/tg/PFUm5RFERxrdMFtTfTTvtl9qDrI", certificate: {:file, "/path/to/cert.pem"}})
 ```
 Read [Marvin's Marvellous Guide to All Things Webhook](https://core.telegram.org/bots/webhooks)
 Also about [Using self-signed certificates](https://core.telegram.org/bots/self-signed).
@@ -168,7 +169,7 @@ http {
     server_name  X.X.X.X; # ext IP address
     ssl_certificate  /path/to/cert.pem; # Certificate we loaded to Telegram API
     ssl_certificate_key  /path/to/cert.key;
-    location /telegram/PFUm5RFERxrdMFtTfTTvtl9qDrI { # Nginx's endpoint
+    location /nginx/tg/PFUm5RFERxrdMFtTfTTvtl9qDrI { # Nginx's endpoint
        proxy_pass http://mybot/tg/PFUm5RFERxrdMFtTfTTvtl9qDrI; # Bandit's endpoint
        proxy_set_header Host $host;
        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -251,7 +252,7 @@ Runs when user session is timed out (when GenServer process received callback to
 Our `handle_timeout` accepts two args: `session_key` and `bot_state`.
 ```elixir
 def handle_timeout({_, chat_or_user_id}, bot_state) do
-  post("sendMessage", %{text: "Bye"}, chat_id: chat_or_user_id)
+  post("sendMessage", %{text: "Bye", chat_id: chat_or_user_id})
   {:stop, bot_state}
 end
 ```
@@ -300,3 +301,35 @@ Callback is not often used, except of catching timeouts, so it's blank by defaul
  * `{:stop, bot_state}`
  
  You are free to override it for your own custom experience.
+
+### API client
+`MyBot.Api` - is your only Telegram Bot API client. All settings are pre-compiled according to configuration settings. 
+Telegram API [accepts](https://core.telegram.org/bots/api#making-requests) both GET and POST methods. Parameters can be passed into body or into query of HTTP request.
+So your client support both:
+```elixir
+MyBot.post("sendMessage", %{text: "Ping", chat_id: 123456789})
+# Parameters encoded into the body of POST request.
+```
+gives the same result as:
+```elixir
+MyBot.get("sendMessage", text: "Ping", chat_id: 123456789)
+# Parameters encoded into URL query string with a GET request.
+```
+That's it. Nothing more, just follow and monitor the official [Telegram Bot API](https://core.telegram.org/bots/api).
+
+### Howto upload files
+Oh yeah. Very simple!
+Hackney-style interface for file uploads is a good solution, so:
+```elixir
+# Send files
+MyBot.post("sendPhoto", %{chat_id: 123456789, photo: {:file, "/path/to/photo.jpg"}})
+```
+or
+```elixir
+# Sending various binary data
+MyBot.post("sendDocument", %{chat_id: 114052235, document: {:file_content, "ANY BINARY DATA", "your_file_name.ext"}})
+```
+In other words, if an API  suggests a file field in any place, just substitute:
+* `{:file, "/path/to/file"}`
+or
+* `{:file_content, "ANY BINARY DATA", "your_file_name.ext"}`
